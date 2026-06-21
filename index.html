@@ -136,12 +136,25 @@
     letter-spacing: -0.5px;
   }
   .nav-logo span { color: var(--accent); }
-  .nav-links{ display:flex; align-items:center; gap:36px; }
+  .nav-links{ display:flex; align-items:center; gap:36px; position:relative; }
   .nav-links a{
+    position:relative;
     font-size:14px; color: var(--text-secondary); font-weight:600;
     transition: color .2s ease;
   }
   .nav-links a:hover{ color: var(--accent); }
+  .nav-links a.active{ color: var(--accent); }
+  .nav-underline{
+    position:absolute; bottom:-4px; left:0;
+    height:2.5px; border-radius:2px;
+    background: linear-gradient(115deg, #4285F4, #9B72CB, #D96570, #F9AB00, #4285F4);
+    background-size: 300% 300%;
+    animation: gemini-flow 4s ease infinite;
+    pointer-events:none;
+    opacity:0;
+    transition: transform .35s cubic-bezier(.4,0,.2,1), width .35s cubic-bezier(.4,0,.2,1), opacity .25s ease;
+  }
+  .nav-underline.visible{ opacity:1; }
   .nav-cta{
     padding: 10px 18px; background: var(--accent-soft); border-radius: var(--radius-sm);
     color: var(--accent) !important; transition: background .2s ease;
@@ -287,6 +300,55 @@
   .reveal{ opacity:0; transform: translateY(20px); transition: opacity .7s ease, transform .7s ease; }
   .reveal.in-view{ opacity:1; transform: translateY(0); }
 
+  /* ---------- reusable glass + Gemini/Siri glow effect ---------- */
+  .glass-glow{
+    position:relative;
+    isolation: isolate;
+    background: rgba(13,19,32,0.72);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    backdrop-filter: blur(18px) saturate(160%);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.92);
+  }
+  .glass-glow::before{
+    content:"";
+    position:absolute; inset:0;
+    border-radius: inherit;
+    padding: 1.5px;
+    background: linear-gradient(115deg, #4285F4, #9B72CB, #D96570, #F9AB00, #4285F4);
+    background-size: 300% 300%;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: gemini-flow 6s ease infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .glass-glow::after{
+    content:"";
+    position:absolute; inset:0;
+    border-radius: inherit;
+    background: radial-gradient(circle at var(--mx,50%) var(--my,30%),
+      rgba(66,133,244,0.40), rgba(155,114,203,0.30) 35%, transparent 65%);
+    opacity:0.55; transition: opacity .35s ease;
+    pointer-events:none;
+    mix-blend-mode: screen;
+    z-index: 0;
+  }
+  .glass-glow:hover::after, .glass-glow.glow-active::after{ opacity:1; }
+  .glass-glow:hover::before{ animation-duration: 2.5s; }
+  .glass-glow > *{ position:relative; z-index:1; }
+  @keyframes gemini-flow{
+    0%{ background-position: 0% 50%; }
+    50%{ background-position: 100% 50%; }
+    100%{ background-position: 0% 50%; }
+  }
+  /* text legibility helpers for content sitting on the dark glass */
+  .glass-glow h3, .glass-glow h4{ color:#FFFFFF; text-shadow: 0 1px 4px rgba(0,0,0,0.85), 0 0 16px rgba(0,0,0,0.5); }
+  .glass-glow p, .glass-glow .val, .glass-glow .where, .glass-glow .lbl, .glass-glow li{
+    color: rgba(255,255,255,0.85);
+  }
+
   /* ---------- about ---------- */
   .about-grid{ display:grid; grid-template-columns: 1.2fr 1fr; gap: 64px; align-items:start; }
   .about-grid h2{ font-size: clamp(28px,3.5vw,36px); margin-bottom:24px; line-height:1.3; }
@@ -307,11 +369,25 @@
   
   .stat-grid{ display:grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   .stat{
-    background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); 
-    padding: 24px; text-align: center; box-shadow: var(--shadow-sm);
+    border-radius: var(--radius);
+    padding: 24px; text-align: center;
+    opacity:0; transform: translateY(16px) scale(.96);
+    transition: opacity .55s ease, transform .55s ease;
+    will-change: transform;
   }
-  .stat .num{ font-size:32px; color: var(--accent); font-weight:800; line-height: 1; margin-bottom: 8px;}
-  .stat .lbl{ font-size:13px; color: var(--text-secondary); font-weight: 500; }
+  .stat.in-view{ opacity:1; transform: translateY(0) scale(1); }
+  .stat.shuffling{ transition: transform .7s cubic-bezier(.4,0,.2,1); }
+  .stat[data-i="0"]{ transition-delay: .05s; }
+  .stat[data-i="1"]{ transition-delay: .15s; }
+  .stat[data-i="2"]{ transition-delay: .25s; }
+  .stat[data-i="3"]{ transition-delay: .35s; }
+  .stat.shuffling[data-i]{ transition-delay: 0s; }
+  .stat:nth-child(1){ transition-delay: .05s; }
+  .stat:nth-child(2){ transition-delay: .15s; }
+  .stat:nth-child(3){ transition-delay: .25s; }
+  .stat:nth-child(4){ transition-delay: .35s; }
+  .stat .num{ font-size:32px; color: #8AB4F8; font-weight:800; line-height: 1; margin-bottom: 8px;}
+  .stat .lbl{ font-size:13px; font-weight: 500; }
 
   /* ---------- about side: stats + animated code illustration ---------- */
   .about-side{ display:flex; flex-direction:column; gap:28px; }
@@ -324,7 +400,18 @@
     box-shadow: var(--shadow-lg);
     overflow: hidden;
     font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    opacity:0; transform: translateY(20px);
+    transition: opacity .6s ease .3s, transform .6s ease .3s;
   }
+  .code-card.in-view{ opacity:1; transform: translateY(0); }
+  .code-card .code-line{ opacity:0; transform: translateX(-8px); transition: opacity .4s ease, transform .4s ease; }
+  .code-card.in-view .code-line{ opacity:1; transform: translateX(0); }
+  .code-card.in-view .code-line:nth-child(1){ transition-delay: .45s; }
+  .code-card.in-view .code-line:nth-child(2){ transition-delay: .55s; }
+  .code-card.in-view .code-line:nth-child(3){ transition-delay: .65s; }
+  .code-card.in-view .code-line:nth-child(4){ transition-delay: .75s; }
+  .code-card.in-view .code-line:nth-child(5){ transition-delay: .85s; }
+  .code-card.in-view .code-line:nth-child(6){ transition-delay: .95s; }
   .code-card__bar{
     display:flex; align-items:center; gap:7px;
     padding: 12px 16px;
@@ -366,36 +453,36 @@
   .skills-section { background: var(--bg-elevated); }
   .skills-grid{ display:grid; grid-template-columns: repeat(3, 1fr); gap:24px; }
   .service-card{
-    background: var(--bg); border:1px solid var(--border); border-radius: var(--radius);
+    border-radius: var(--radius);
     padding: 32px 24px;
     transition: all .2s ease;
   }
-  .service-card:hover{ transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--accent); background: var(--bg-elevated); }
+  .service-card:hover{ transform: translateY(-4px); box-shadow: var(--shadow-lg); }
   .service-card__head{ margin-bottom:20px; }
-  .service-card__head h3{ font-size:18px; color: var(--text-primary); }
+  .service-card__head h3{ font-size:18px; }
   .chip-list{ display:flex; flex-wrap:wrap; gap:8px; }
   .chip-list li{
-    font-size:13px; font-weight: 500; color: var(--text-secondary);
-    background: var(--bg-elevated); border: 1px solid var(--border);
+    font-size:13px; font-weight: 500;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14);
     border-radius: 20px; padding:6px 14px;
   }
 
   /* ---------- projects ---------- */
   .projects-grid{ display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap:24px; }
   .project-card{
-    background: var(--bg-card); border:1px solid var(--border); border-radius: var(--radius);
+    border-radius: var(--radius);
     padding: 32px 24px; display:flex; flex-direction:column; gap:16px;
-    box-shadow: var(--shadow-sm); transition: all .2s ease;
+    transition: all .2s ease;
   }
-  .project-card:hover{ transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--accent); }
-  .project-card h3{ font-size:20px; color: var(--text-primary); }
-  .project-card p{ color: var(--text-secondary); font-size:15px; flex:1; }
+  .project-card:hover{ transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+  .project-card h3{ font-size:20px; }
+  .project-card p{ font-size:15px; flex:1; }
   .project-card ul.sub{ display:flex; flex-direction:column; gap:8px; margin:0; padding-left: 18px; }
-  .project-card ul.sub li{ color: var(--text-secondary); font-size:15px; }
-  .tag-row{ display:flex; flex-wrap:wrap; gap:8px; margin-top:auto; border-top: 1px solid var(--border); padding-top: 20px;}
+  .project-card ul.sub li{ font-size:15px; }
+  .tag-row{ display:flex; flex-wrap:wrap; gap:8px; margin-top:auto; border-top: 1px solid rgba(255,255,255,0.14); padding-top: 20px;}
   .tag{
-    font-size:12px; font-weight: 600; color: var(--accent);
-    background: var(--accent-soft); border-radius: var(--radius-sm); padding:4px 10px;
+    font-size:12px; font-weight: 600; color: #8AB4F8;
+    background: rgba(255,255,255,0.08); border-radius: var(--radius-sm); padding:4px 10px;
   }
 
   /* ---------- project screenshots ---------- */
@@ -440,31 +527,34 @@
     position:relative;
     border-radius: var(--radius);
     overflow:hidden;
-    isolation: isolate;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow-sm);
-    transition: border-color .25s ease, box-shadow .25s ease;
   }
-  .edu-card:hover{ box-shadow: var(--shadow-md); border-color: var(--accent); }
   .edu-card__head{
     display:flex; align-items:center; justify-content:space-between; gap:16px;
     width:100%; text-align:left;
     padding: 24px 26px;
-    background:none; border:none; cursor:pointer;
+    border:none; cursor:pointer;
     font-family: var(--font-sans);
+    border-radius: var(--radius);
   }
   .edu-card__head-text{ display:flex; flex-direction:column; gap:6px; }
+  .edu-card__thumb{
+    flex: 0 0 auto;
+    width:52px; height:52px; border-radius:12px;
+    object-fit:cover; object-position:center;
+    border:1px solid rgba(255,255,255,0.18);
+    box-shadow: var(--shadow-sm);
+  }
+  .edu-card__head-main{ display:flex; align-items:center; gap:16px; min-width:0; }
   .edu-card__head .when{
-    font-size:12px; font-weight: 700; color: var(--accent);
+    font-size:12px; font-weight: 700; color: #8AB4F8;
     text-transform: uppercase; letter-spacing: 1.5px;
   }
-  .edu-card__head h3{ font-size:21px; color: var(--text-primary); }
+  .edu-card__head h3{ font-size:21px; }
   .edu-card__chevron{
     flex: 0 0 auto;
     width:34px; height:34px; border-radius:50%;
     display:flex; align-items:center; justify-content:center;
-    background: var(--accent-soft); color: var(--accent);
+    background: rgba(255,255,255,0.1); color: #8AB4F8;
     transition: transform .35s ease, background .25s ease;
   }
   .edu-card__chevron svg{ width:16px; height:16px; transition: transform .35s ease; }
@@ -524,6 +614,8 @@
   @media (max-width: 600px){
     .edu-card__head{ padding: 20px; }
     .edu-card__head h3{ font-size:18px; }
+    .edu-card__thumb{ width:40px; height:40px; border-radius:10px; }
+    .edu-card__head-main{ gap:12px; }
   }
 
   /* ---------- contact ---------- */
@@ -532,14 +624,14 @@
   .contact-top p{ color: var(--text-secondary); font-size:18px; max-width:500px; }
   .contact-grid{ display:grid; grid-template-columns: repeat(4,1fr); gap:20px; }
   .contact-card{
-    background: var(--bg-card); border:1px solid var(--border); border-radius: var(--radius);
+    border-radius: var(--radius);
     padding: 28px 24px; display:flex; flex-direction:column; gap:16px; align-items: center; text-align: center;
-    box-shadow: var(--shadow-sm); transition: all .2s ease;
+    transition: all .2s ease;
   }
-  .contact-card:hover{ transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--accent); }
-  .contact-card svg{ width:28px; height:28px; stroke: var(--accent); }
-  .contact-card .lbl{ font-size:13px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-  .contact-card .val{ font-size:15px; font-weight:600; color: var(--text-primary); }
+  .contact-card:hover{ transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+  .contact-card svg{ width:28px; height:28px; stroke: #8AB4F8; }
+  .contact-card .lbl{ font-size:13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+  .contact-card .val{ font-size:15px; font-weight:600; color: #FFFFFF; }
 
   /* ---------- footer ---------- */
   footer{ padding: 40px 0; background: var(--bg-elevated); border-top: 1px solid var(--border); }
@@ -570,6 +662,7 @@
     }
     .nav-links.open{ max-height: 400px; box-shadow: var(--shadow-md); }
     .nav-links a, .nav-links .nav-cta{ width:100%; padding:20px 24px; border-bottom:1px solid var(--border); border-radius:0; }
+    .nav-underline{ display:none; }
     .nav-toggle{ display:block; }
     .skills-grid{ grid-template-columns: 1fr; }
     .projects-grid{ grid-template-columns: 1fr; }
@@ -587,12 +680,13 @@
   <div class="wrap">
     <a href="#top" class="nav-logo">Swetha<span>.</span></a>
     <ul class="nav-links" id="navLinks">
-      <li><a href="#about">Profile</a></li>
-      <li><a href="#skills">Expertise</a></li>
-      <li><a href="#projects">Works</a></li>
-      <li><a href="#education">Education</a></li>
-      <li><a href="#contact">Contact</a></li>
+      <li><a href="#about" data-nav="about">Profile</a></li>
+      <li><a href="#skills" data-nav="skills">Expertise</a></li>
+      <li><a href="#projects" data-nav="projects">Works</a></li>
+      <li><a href="#education" data-nav="education">Education</a></li>
+      <li><a href="#contact" data-nav="contact">Contact</a></li>
       <li><a href="Swetha_V_Resume.docx" class="nav-cta">Download Resume</a></li>
+      <span class="nav-underline" id="navUnderline"></span>
     </ul>
     <div class="nav-right">
       <button class="theme-toggle" id="themeToggle" aria-label="Switch to dark theme" aria-pressed="false">
@@ -658,11 +752,11 @@
         </div>
       </div>
       <div class="about-side reveal">
-        <div class="stat-grid">
-          <div class="stat"><div class="num">9.3+</div><div class="lbl">Overall CGPA</div></div>
-          <div class="stat"><div class="num">4+</div><div class="lbl">Projects Built</div></div>
-          <div class="stat"><div class="num">CCNA</div><div class="lbl">Cisco Certified</div></div>
-          <div class="stat"><div class="num">4</div><div class="lbl">Languages Spoken</div></div>
+        <div class="stat-grid" id="statGrid">
+          <div class="stat glass-glow" data-i="0"><div class="num">9.3+</div><div class="lbl">Overall CGPA</div></div>
+          <div class="stat glass-glow" data-i="1"><div class="num">4+</div><div class="lbl">Projects Built</div></div>
+          <div class="stat glass-glow" data-i="2"><div class="num">CCNA</div><div class="lbl">Cisco Certified</div></div>
+          <div class="stat glass-glow" data-i="3"><div class="num">4</div><div class="lbl">Languages Spoken</div></div>
         </div>
 
         <div class="code-card" aria-hidden="true">
@@ -694,7 +788,7 @@
         <p>The core tools, languages, and environments I use to build, test, and deploy software.</p>
       </div>
       <div class="skills-grid">
-        <article class="service-card reveal">
+        <article class="service-card glass-glow reveal">
           <div class="service-card__head">
             <h3>Core Programming</h3>
           </div>
@@ -702,7 +796,7 @@
             <li>C &amp; C++</li><li>Java</li><li>Python</li><li>SQL</li><li>OOP concepts</li><li>Data preprocessing</li>
           </ul>
         </article>
-        <article class="service-card reveal">
+        <article class="service-card glass-glow reveal">
           <div class="service-card__head">
             <h3>Web Technologies</h3>
           </div>
@@ -710,7 +804,7 @@
             <li>HTML5</li><li>CSS3</li><li>JavaScript</li><li>PHP</li><li>Perl</li>
           </ul>
         </article>
-        <article class="service-card reveal">
+        <article class="service-card glass-glow reveal">
           <div class="service-card__head">
             <h3>Software Testing &amp; QA</h3>
           </div>
@@ -718,7 +812,7 @@
             <li>Black-Box testing</li><li>White-Box testing</li><li>Selenium automation</li><li>UI testing</li>
           </ul>
         </article>
-        <article class="service-card reveal">
+        <article class="service-card glass-glow reveal">
           <div class="service-card__head">
             <h3>Cloud Architecture</h3>
           </div>
@@ -726,7 +820,7 @@
             <li>AWS EC2</li><li>AWS S3</li><li>AWS IAM</li><li>Multipart uploads</li><li>Network security</li>
           </ul>
         </article>
-        <article class="service-card reveal">
+        <article class="service-card glass-glow reveal">
           <div class="service-card__head">
             <h3>Tools &amp; Version Control</h3>
           </div>
@@ -746,7 +840,7 @@
         <p>A selection of my frontend, backend, and hardware-integrated applications.</p>
       </div>
       <div class="projects-grid">
-        <article class="project-card project-card--featured reveal">
+        <article class="project-card project-card--featured glass-glow reveal">
           <div class="featured-layout">
             <div class="featured-text">
               <h3>FoodFeast (Final Year Project)</h3>
@@ -775,7 +869,7 @@
             </div>
           </div>
         </article>
-        <article class="project-card reveal">
+        <article class="project-card glass-glow reveal">
           <h3>News Website</h3>
           <p>A clean, responsive news site built with HTML, CSS and JavaScript &mdash; featuring categorized article pages and smooth navigation between sections.</p>
           <div class="project-shots">
@@ -785,7 +879,7 @@
           </div>
           <div class="tag-row"><span class="tag">HTML</span><span class="tag">CSS</span><span class="tag">JavaScript</span></div>
         </article>
-        <article class="project-card reveal">
+        <article class="project-card glass-glow reveal">
           <h3>Event Calendar &amp; Reminder Web App</h3>
           <p>An interactive calendar app for scheduling events and setting reminders, with a month view and quick add-event form.</p>
           <div class="project-shots">
@@ -795,7 +889,7 @@
           </div>
           <div class="tag-row"><span class="tag">HTML</span><span class="tag">CSS</span><span class="tag">JavaScript</span></div>
         </article>
-        <article class="project-card reveal">
+        <article class="project-card glass-glow reveal">
           <h3>IoT Smart Notice Board</h3>
           <p>An integrated hardware and software system designed for efficient, digital notice management, delivering real-time information updates remotely.</p>
           <div class="project-shots">
@@ -817,10 +911,13 @@
       </div>
       <div class="edu-list">
         <article class="edu-card reveal">
-          <button class="edu-card__head" aria-expanded="false">
-            <div class="edu-card__head-text">
-              <div class="when">Completed · 2023 – 2026</div>
-              <h3>Diploma in Computer Engineering &amp; IT Infrastructure</h3>
+          <button class="edu-card__head glass-glow" aria-expanded="false">
+            <div class="edu-card__head-main">
+              <img src="edu-nttf.jpg" alt="NTTF Bangalore campus" class="edu-card__thumb" loading="lazy">
+              <div class="edu-card__head-text">
+                <div class="when">Completed · 2023 – 2026</div>
+                <h3>Diploma in Computer Engineering &amp; IT Infrastructure</h3>
+              </div>
             </div>
             <span class="edu-card__chevron">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
@@ -834,10 +931,13 @@
           </div>
         </article>
         <article class="edu-card reveal">
-          <button class="edu-card__head" aria-expanded="false">
-            <div class="edu-card__head-text">
-              <div class="when">Higher Secondary (+2) · 2020 – 2023</div>
-              <h3>Plus Two — Bio Science</h3>
+          <button class="edu-card__head glass-glow" aria-expanded="false">
+            <div class="edu-card__head-main">
+              <img src="edu-govt-girls-hss.jpg" alt="Govt. Girls Higher Secondary School, Thalassery" class="edu-card__thumb" loading="lazy">
+              <div class="edu-card__head-text">
+                <div class="when">Higher Secondary (+2) · 2020 – 2023</div>
+                <h3>Plus Two — Bio Science</h3>
+              </div>
             </div>
             <span class="edu-card__chevron">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
@@ -851,10 +951,13 @@
           </div>
         </article>
         <article class="edu-card reveal">
-          <button class="edu-card__head" aria-expanded="false">
-            <div class="edu-card__head-text">
-              <div class="when">Secondary (10th Grade) · 2020</div>
-              <h3>SSLC</h3>
+          <button class="edu-card__head glass-glow" aria-expanded="false">
+            <div class="edu-card__head-main">
+              <img src="edu-sacred-heart.jpg" alt="Sacred Heart Girls Higher Secondary School" class="edu-card__thumb" loading="lazy">
+              <div class="edu-card__head-text">
+                <div class="when">Secondary (10th Grade) · 2020</div>
+                <h3>SSLC</h3>
+              </div>
             </div>
             <span class="edu-card__chevron">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
@@ -882,28 +985,28 @@
         <a href="Swetha_V_Resume.docx" class="btn btn-primary">Download Resume</a>
       </div>
       <div class="contact-grid">
-        <a href="mailto:swethasudeer306@gmail.com" class="contact-card reveal">
+        <a href="mailto:swethasudeer306@gmail.com" class="contact-card glass-glow reveal">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z" stroke="none"/><path d="M22 6 12 13 2 6"/><path d="M2 6h20v12H2z"/></svg>
           <div>
             <div class="lbl">Email</div>
             <div class="val">swethasudeer306@gmail.com</div>
           </div>
         </a>
-        <a href="tel:+917736637821" class="contact-card reveal">
+        <a href="tel:+917736637821" class="contact-card glass-glow reveal">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.34 1.78.65 2.62a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.45-1.45a2 2 0 0 1 2.11-.45c.84.31 1.72.53 2.62.65A2 2 0 0 1 22 16.92Z"/></svg>
           <div>
             <div class="lbl">Phone</div>
             <div class="val">+91 77366 37821</div>
           </div>
         </a>
-        <a href="https://github.com/Swethav018" target="_blank" rel="noopener" class="contact-card reveal">
+        <a href="https://github.com/Swethav018" target="_blank" rel="noopener" class="contact-card glass-glow reveal">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77 5.44 5.44 0 0 0 3.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
           <div>
             <div class="lbl">GitHub</div>
             <div class="val">Swethav018</div>
           </div>
         </a>
-        <a href="https://www.linkedin.com/in/swetha-v-b11633304" target="_blank" rel="noopener" class="contact-card reveal">
+        <a href="https://www.linkedin.com/in/swetha-v-b11633304" target="_blank" rel="noopener" class="contact-card glass-glow reveal">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6Z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
           <div>
             <div class="lbl">LinkedIn</div>
@@ -962,6 +1065,54 @@
     });
   });
 
+  // Nav underline — Gemini/Siri-style animated indicator under the active section link
+  const navUnderline = document.getElementById('navUnderline');
+  const navAnchors = Array.from(navLinks.querySelectorAll('a[data-nav]'));
+  const navSections = navAnchors
+    .map(a => ({ link: a, section: document.getElementById(a.dataset.nav) }))
+    .filter(item => item.section);
+
+  function moveUnderlineTo(link) {
+    if (!link || !navUnderline) return;
+    const linkRect = link.getBoundingClientRect();
+    const containerRect = navLinks.getBoundingClientRect();
+    navUnderline.style.width = linkRect.width + 'px';
+    navUnderline.style.transform = `translateX(${linkRect.left - containerRect.left}px)`;
+    navUnderline.classList.add('visible');
+    navAnchors.forEach(a => a.classList.remove('active'));
+    link.classList.add('active');
+  }
+
+  let scrollTrackingEnabled = true;
+
+  // Click: jump the underline immediately to the clicked link
+  navAnchors.forEach(a => {
+    a.addEventListener('click', () => {
+      moveUnderlineTo(a);
+      scrollTrackingEnabled = false;
+      setTimeout(() => { scrollTrackingEnabled = true; }, 900); // resume auto-tracking after the smooth-scroll settles
+    });
+  });
+
+  // Scroll: auto-update underline to whichever section is currently in view
+  if ('IntersectionObserver' in window && navSections.length) {
+    const navIo = new IntersectionObserver((entries) => {
+      if (!scrollTrackingEnabled) return;
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const match = navSections.find(item => item.section === entry.target);
+          if (match) moveUnderlineTo(match.link);
+        }
+      });
+    }, { rootMargin: '-45% 0px -45% 0px', threshold: 0 });
+    navSections.forEach(item => navIo.observe(item.section));
+  }
+
+  window.addEventListener('resize', () => {
+    const activeLink = navLinks.querySelector('a.active');
+    if (activeLink) moveUnderlineTo(activeLink);
+  });
+
   // Personal Info Toggle
   const personalBtn = document.getElementById('personalToggle');
   const personalInfo = document.getElementById('personalInfo');
@@ -991,6 +1142,103 @@
     document.querySelectorAll('.reveal').forEach(el => el.classList.add('in-view'));
   }
 
+  // Stat + code-card entrance animation (separate from .reveal so delays/stagger are self-contained)
+  function animateStatNumber(el) {
+    const raw = el.textContent.trim();
+    const match = raw.match(/^(\d+(?:\.\d+)?)(.*)$/);
+    if (!match) return; // non-numeric (e.g. "CCNA") — leave as-is, just fades in
+    const target = parseFloat(match[1]);
+    const suffix = match[2];
+    const isDecimal = match[1].includes('.');
+    const duration = 900;
+    const start = performance.now();
+    el.textContent = (isDecimal ? '0.0' : '0') + suffix;
+    function tick(now) {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = target * eased;
+      el.textContent = (isDecimal ? current.toFixed(1) : Math.round(current)) + suffix;
+      if (progress < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  if (!reduceMotion && 'IntersectionObserver' in window) {
+    const statIo = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view');
+          const numEl = entry.target.querySelector('.num');
+          if (numEl) animateStatNumber(numEl);
+          statIo.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.3 });
+    document.querySelectorAll('.stat, .code-card').forEach(el => statIo.observe(el));
+  } else {
+    document.querySelectorAll('.stat, .code-card').forEach(el => el.classList.add('in-view'));
+  }
+
+  // Continuous stat-card shuffle — all 4 cards swap positions together every few seconds (FLIP technique)
+  const statGrid = document.getElementById('statGrid');
+  if (statGrid && !reduceMotion) {
+    let shuffleTimer = null;
+    let gridVisible = false;
+
+    function shuffleStats() {
+      const cards = Array.from(statGrid.children);
+      // record starting positions
+      const first = cards.map(c => c.getBoundingClientRect());
+
+      // build a derangement (every card must move to a different slot)
+      let order;
+      do {
+        order = [...cards.keys()];
+        for (let i = order.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [order[i], order[j]] = [order[j], order[i]];
+        }
+      } while (order.some((v, i) => v === i));
+
+      // reorder DOM nodes to new positions
+      order.forEach(originalIndex => statGrid.appendChild(cards[originalIndex]));
+
+      // measure new positions, then invert + play
+      const reordered = Array.from(statGrid.children);
+      reordered.forEach((card, i) => {
+        const last = card.getBoundingClientRect();
+        const originalIndex = order[i];
+        const dx = first[originalIndex].left - last.left;
+        const dy = first[originalIndex].top - last.top;
+        card.classList.remove('shuffling');
+        card.style.transition = 'none';
+        card.style.transform = `translate(${dx}px, ${dy}px)`;
+        // force reflow so the browser registers the start position before animating
+        void card.offsetWidth;
+        card.classList.add('shuffling');
+        card.style.transition = '';
+        card.style.transform = '';
+      });
+    }
+
+    function startShuffleLoop() {
+      if (shuffleTimer) return;
+      shuffleTimer = setInterval(shuffleStats, 3200);
+    }
+    function stopShuffleLoop() {
+      clearInterval(shuffleTimer);
+      shuffleTimer = null;
+    }
+
+    // Only shuffle while the grid is actually on screen — saves cycles and avoids surprising jumps off-screen
+    new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        gridVisible = entry.isIntersecting;
+        if (gridVisible) startShuffleLoop(); else stopShuffleLoop();
+      });
+    }, { threshold: 0.2 }).observe(statGrid);
+  }
+
   // Gemini/Siri-style cursor-reactive glow — reusable for any matching elements
   function wireGlow(card) {
     card.addEventListener('mousemove', (e) => {
@@ -1017,6 +1265,7 @@
   if (glanceCard) wireGlow(glanceCard);
 
   document.querySelectorAll('.edu-card__body-inner').forEach(wireGlow);
+  document.querySelectorAll('.glass-glow').forEach(wireGlow);
 
   // Education accordion — click a heading to reveal its course details, one at a time
   document.querySelectorAll('.edu-card__head').forEach(head => {
